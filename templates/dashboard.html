@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climate Visibility Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .prediction-result {
+            margin-top: 20px;
+            font-size: 20px;
+            color: #333;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Climate Visibility Prediction</h1>
+
+        <form method="POST">
+            <div class="form-group">
+                <label for="DRYBULBTEMPF">Dry Bulb Temperature (°F):</label>
+                <input type="number" id="DRYBULBTEMPF" name="DRYBULBTEMPF" required>
+            </div>
+            <div class="form-group">
+                <label for="WETBULBTEMPF">Wet Bulb Temperature (°F):</label>
+                <input type="number" id="WETBULBTEMPF" name="WETBULBTEMPF" required>
+            </div>
+            <div class="form-group">
+                <label for="DewPointTempF">Dew Point Temperature (°F):</label>
+                <input type="number" id="DewPointTempF" name="DewPointTempF" required>
+            </div>
+            <div class="form-group">
+                <label for="RelativeHumidity">Relative Humidity (%):</label>
+                <input type="number" id="RelativeHumidity" name="RelativeHumidity" required>
+            </div>
+            <div class="form-group">
+                <label for="WindSpeed">Wind Speed (mph):</label>
+                <input type="number" id="WindSpeed" name="WindSpeed" required>
+            </div>
+            <div class="form-group">
+                <label for="WindDirection">Wind Direction (°):</label>
+                <input type="number" id="WindDirection" name="WindDirection" required>
+            </div>
+            <div class="form-group">
+                <label for="StationPressure">Station Pressure (inHg):</label>
+                <input type="number" id="StationPressure" name="StationPressure" required>
+            </div>
+            <div class="form-group">
+                <label for="SeaLevelPressure">Sea Level Pressure (inHg):</label>
+                <input type="number" id="SeaLevelPressure" name="SeaLevelPressure" required>
+            </div>
+            <div class="form-group">
+                <label for="Precip">Precipitation (inches):</label>
+                <input type="number" id="Precip" name="Precip" required>
+            </div>
+
+            <button type="submit">Get Prediction</button>
+        </form>
+
+        {% if prediction %}
+        <div class="prediction-result">
+            <p>The predicted visibility for the given conditions is: {{ prediction }} km</p>
+        </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>

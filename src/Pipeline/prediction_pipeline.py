@@ -1,102 +1,93 @@
-import os
-import sys
-import logging
 import pandas as pd
-import joblib
-from src.exception import CustomException
-from src.logger import logging
+import pickle
+import logging
+import numpy as np
 
-# Set up logging
-logger = logging.getLogger('ML_Project_Logger')
-logger.setLevel(logging.INFO)
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-logger.addHandler(ch)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
 
-# Define constants for directory paths
-ARTIFACTS_DIR = "C:\\Users\\shiva\\Climate-Visibility-Prediction\\artifacts"  # Update if necessary
-MODEL_PATH = os.path.join(ARTIFACTS_DIR, 'model.pkl')
-PREPROCESSOR_PATH = os.path.join(ARTIFACTS_DIR, 'preprocessor.pkl')
+class PredictionPipeline:
+    def __init__(self):
+        self.model = None
+        self.preprocessor = None
+        self.feature_names = None
+        self.load_artifacts()
 
-# Function to load the model and preprocessor
-def load_model_and_preprocessor():
-    try:
-        # Load the model and preprocessor
-        model = joblib.load(MODEL_PATH)
-        preprocessor = joblib.load(PREPROCESSOR_PATH)
-        logger.info(f"Model and preprocessor loaded successfully")
-        return model, preprocessor
-    except Exception as e:
-        raise CustomException(f"Error loading model or preprocessor: {str(e)}", sys)
+    def load_artifacts(self):
+        try:
+            # Load the trained model
+            with open('artifacts/trained_model.pkl', 'rb') as f:
+                self.model = pickle.load(f)
+            logger.info("Model loaded successfully.")
 
-# Function to preprocess input data
-def preprocess_input_data(data, preprocessor):
-    try:
-        # Drop the 'date' column if it exists
-        if 'DATE' in data.columns:
-            data = data.drop(columns=['DATE'])
-            logger.info("Dropped 'date' column")
+            # Load the preprocessor (Scaler, Encoder, etc.)
+            with open('artifacts/scaler.pkl', 'rb') as f:
+                self.preprocessor = pickle.load(f)
+            logger.info("Preprocessor loaded successfully.")
 
-        # Ensure the columns in input data match the order of features used in training
-        expected_columns = ['DRYBULBTEMPF', 'RelativeHumidity', 'WindSpeed', 'StationPressure', 'WindDirection', 'Precip']
-        missing_columns = [col for col in expected_columns if col not in data.columns]
-        if missing_columns:
-            raise CustomException(f"Missing columns in input data: {missing_columns}", sys)
+            # Load feature names
+            with open('artifacts/feature_names.pkl', 'rb') as f:
+                self.feature_names = pickle.load(f)
+            logger.info(f"Feature names loaded: {self.feature_names}")
 
-        # Reorder the columns to match the order of the trained model's features
-        data = data[expected_columns]
-        
-        # Scale the features using the preprocessor (StandardScaler)
-        X_scaled = preprocessor.transform(data)
-        logger.info("Input data preprocessing completed (features scaled)")
+        except Exception as e:
+            logger.error(f"Error loading artifacts: {e}")
+            raise
 
-        return X_scaled
-    except Exception as e:
-        raise CustomException(f"Error during input data preprocessing: {str(e)}", sys)
+    def preprocess_input_data(self, input_data: pd.DataFrame) -> np.ndarray:
+        try:
+            # Ensure input data has the required columns
+            missing_cols = [col for col in self.feature_names if col not in input_data.columns]
+            for col in missing_cols:
+                input_data[col] = 0  # Fill missing columns with 0
+                logger.info(f"Added missing column: {col}")
 
-# Function to make predictions
-def make_predictions(model, preprocessed_data):
-    try:
-        # Predict using the trained model
-        predictions = model.predict(preprocessed_data)
-        return predictions
-    except Exception as e:
-        raise CustomException(f"Error making predictions: {str(e)}", sys)
+            # Reorder input data columns to match the training feature order
+            input_data = input_data[self.feature_names]
+            logger.info(f"Reordered input data columns: {input_data.columns.tolist()}")
 
-# Main pipeline function
-def run_prediction_pipeline(input_data):
-    try:
-        # Load the model and preprocessor
-        model, preprocessor = load_model_and_preprocessor()
+            # Apply the same preprocessing (scaling)
+            preprocessed_data = self.preprocessor.transform(input_data)
+            logger.info("Preprocessed data.")
+            return preprocessed_data
 
-        # Preprocess the input data
-        preprocessed_data = preprocess_input_data(input_data, preprocessor)
+        except Exception as e:
+            logger.error(f"Error during input data preprocessing: {e}")
+            raise
 
-        # Make predictions
-        predictions = make_predictions(model, preprocessed_data)
+    def predict(self, input_data: pd.DataFrame):
+        try:
+            # Preprocess input data
+            preprocessed_data = self.preprocess_input_data(input_data)
 
-        logger.info(f"Predictions: {predictions}")
-        return predictions
-    except CustomException as ce:
-        logger.error(f"Custom Exception: {ce}")
-    except Exception as e:
-        logger.error(f"An error occurred: {e}")
+            # Make predictions using the trained model
+            predictions = self.model.predict(preprocessed_data)
+            logger.info(f"Predicted Visibility: {predictions}")
+            return predictions
 
-# Example usage of the pipeline with input data
+        except Exception as e:
+            logger.error(f"Error during prediction: {e}")
+            return None
+
+
+# Example usage of the Prediction Pipeline
 if __name__ == "__main__":
-    try:
-        # Example input data (replace with actual input data for prediction)
-        input_data = pd.DataFrame({
-            'DRYBULBTEMPF': [25.0],
-            'RelativeHumidity': [60.0],
-            'WindSpeed': [10.0],
-            'StationPressure': [1015.0],
-            'WindDirection': [0],
-            'Precip': [0]
-        })
+    pipeline = PredictionPipeline()
 
-        # Run the prediction pipeline
-        predictions = run_prediction_pipeline(input_data)
-        print(f"Predicted Visibility: {predictions}")
-    except Exception as e:
-        logger.error(f"An error occurred: {e}")
+    # Example input data for prediction
+    input_data = pd.DataFrame({
+        'DRYBULBTEMPF': [75],
+        'WETBULBTEMPF': [70],
+        'DewPointTempF': [65],
+        'RelativeHumidity': [80],
+        'WindSpeed': [12],
+        'WindDirection': [100],
+        'StationPressure': [29.85],
+        'SeaLevelPressure': [30.00],
+        'Precip': [0.01]
+    })
+
+    # Call the predict method
+    prediction = pipeline.predict(input_data)
+    print(f"Predicted Visibility: {prediction}")
