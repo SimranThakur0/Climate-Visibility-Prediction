@@ -4,7 +4,7 @@
 </head>
 <body>
     <h1>Climate Visibility Prediction</h1>
-    <h2>Project Overview</h2>
+    <h2>Project Overview</h2> 
     <p>This project aims to predict climate visibility based on weather parameters. It takes various environmental factors as inputs, such as temperature, humidity, wind speed, and pressure, and uses a machine learning model to estimate the visibility in kilometers. The project includes an interactive dashboard where users can input these parameters and receive a visibility prediction.</p>
 
   <h2>Features</h2>
